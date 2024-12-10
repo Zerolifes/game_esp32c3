@@ -55,7 +55,7 @@ extern "C" void app_main()
 	}
 	
 	clearScreen(&oled, BLACK);
-	showText(&oled, "     Your win!", 3, BLACK);
+	showText(&oled, "     You're win!", 3, BLACK);
 	during(2000);
 	
 	esp_restart();

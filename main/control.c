@@ -18,9 +18,9 @@
 #include "portmacro.h"
 #include "soc/gpio_num.h"
 
-#define BUTTON_UP GPIO_NUM_4
-#define BUTTON_RIGHT GPIO_NUM_5
-#define BUTTON_DOWN GPIO_NUM_6
+#define BUTTON_UP GPIO_NUM_6
+#define BUTTON_RIGHT GPIO_NUM_4
+#define BUTTON_DOWN GPIO_NUM_5
 #define BUTTON_LEFT GPIO_NUM_7
 
 #define DEBOUNCE_DELAY_MS 250 
