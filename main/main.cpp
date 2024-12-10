@@ -4,6 +4,9 @@
  *  Created on: Dec 9, 2024
  *      Author: ro
  */
+ 
+#include "control.c"
+
 #include "esp_system.h"
 #include "esp_log.h"
 #include <stdio.h>
@@ -18,28 +21,42 @@
 #include "User.h"
 
 extern "C" void app_main()
-{
+{	
+	remoteConfig();
 	SSD1306_t oled;	
 	initScreen(&oled);
 	clearScreen(&oled, BLACK);
+
 	
-	showText(&oled, "   Start", 3, BLACK);
-	showText(&oled, "   Pair", 4, BLACK);
+	showText(&oled, "     Start", 3, BLACK);
+	showText(&oled, "      Pair", 4, BLACK);
 	during(1000);
+	clearScreen(&oled, BLACK);
 	
 	Maze maze;
-	maze.draw(&oled);
 	
 	User user(maze);
-	
-	bool gameLoop = 1;
+	usx = user.us1.x;
+	usy = user.us1.y; 
 	
 	while (gameLoop)
 	{
+		if (user.checkMap(maze, user.us1, Node (usx, usy)))
+		{
+			user.move(&oled, maze, user.us1, Node(usx, usy));
+		}
+		else 
+		{
+			usx = user.us1.x;
+			usy = user.us1.y;
+		}
 		user.draw(&oled, maze);
-		
+		if (user.us1.x == user.des.x && user.us1.y == user.des.y) gameLoop = 0;
 	}
 	
+	clearScreen(&oled, BLACK);
+	showText(&oled, "     Your win!", 3, BLACK);
+	during(2000);
 	
 	esp_restart();
 }

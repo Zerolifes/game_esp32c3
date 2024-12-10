@@ -28,12 +28,15 @@ class User {
 public:
 	Node us1;
 	Node us2;
+	Node des;
 	uint8_t far = 0;
 	User(Maze &maze);
 	void bfs(Maze &maze, Node start);
 	void getLoc(uint8_t dis, Node start, Node end);
 	bool checkMap(Maze &maze, Node start, Node end);
 	void draw(SSD1306_t *screen, Maze &maze);
+	void move(SSD1306_t *screen, Maze &maze, Node start, Node end);
+	void getDes(Maze &maze, Node start, Node end);
 	virtual ~User();
 };
 

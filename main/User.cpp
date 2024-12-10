@@ -6,12 +6,12 @@
  */
 
 #include "User.h"
+#include "Maze.h"
 #include "esp_mesh.h"
 #include "ssd1306.h"
 #include <stdint.h>
 #include <string.h>
 #include "Cell.h"
-
 
 User::User(Maze &maze) 
 {
@@ -21,6 +21,71 @@ User::User(Maze &maze)
 		{
 			bfs(maze, Node(x, y));	
 		}
+	}
+	getDes(maze, us1, us2);
+}
+
+void User::getDes(Maze &maze, Node start, Node end)
+{
+	Node que[128];
+	que[0] = start;
+	uint8_t l = 0;
+	uint8_t r = 0;
+	uint8_t dis[8][16];
+	Node par[8][16];
+	bool vis[8][16];
+	memset(dis, 0, sizeof(dis));
+	memset(vis, 0, sizeof(vis));
+	vis[start.x][start.y] = 1;
+	while (l<=r)
+	{
+		Node u = que[l]; l++;
+		Node v;
+		v.x = u.x + 1; v.y = u.y;
+		if (!vis[v.x][v.y] && v.x < 8 && checkMap(maze, u, v))
+		{
+			vis[v.x][v.y] = 1;
+			dis[v.x][v.y] = dis[u.x][u.y] + 1;
+			par[v.x][v.y] = Node(u.x, u.y);
+			if (v.x == end.x && v.y == end.y) break;
+			r++;
+			que[r] = v;
+		}
+		v.x = u.x - 1; v.y = u.y;
+		if (!vis[v.x][v.y] && v.x >= 0 && checkMap(maze, u, v))
+		{
+			vis[v.x][v.y] = 1;
+			dis[v.x][v.y] = dis[u.x][u.y] + 1;
+			par[v.x][v.y] = Node(u.x, u.y);
+			if (v.x == end.x && v.y == end.y) break;
+			r++;
+			que[r] = v;
+		}
+		v.x = u.x; v.y = u.y + 1;
+		if (!vis[v.x][v.y] && v.y < 16 && checkMap(maze, u, v))
+		{
+			vis[v.x][v.y] = 1;
+			dis[v.x][v.y] = dis[u.x][u.y] + 1;
+			par[v.x][v.y] = Node(u.x, u.y);
+			if (v.x == end.x && v.y == end.y) break;
+			r++;
+			que[r] = v;
+		}
+		v.x = u.x; v.y = u.y - 1;
+		if (!vis[v.x][v.y] && v.y >= 0 && checkMap(maze, u, v))
+		{
+			vis[v.x][v.y] = 1;
+			dis[v.x][v.y] = dis[u.x][u.y] + 1;
+			par[v.x][v.y] = Node(u.x, u.y);
+			if (v.x == end.x && v.y == end.y) break;
+			r++;
+			que[r] = v;
+		}
+	}
+	des = end;
+	for (uint8_t i=0;i<dis[end.x][end.y]/2;i++)
+	{
+		des = par[des.x][des.y];
 	}
 }
 
@@ -90,6 +155,7 @@ void User::getLoc(uint8_t dis, Node start, Node end)
 
 bool User::checkMap(Maze &maze, Node start, Node end)
 {
+	if (start.x == end.x && start.y == end.y) return 0;
 	if (start.x == end.x)
 	{
 		if (start.y < end.y)
@@ -123,9 +189,61 @@ void User::draw(SSD1306_t *screen, Maze &maze)
 	cell.shape[5] = cell.shape[5] | 0b00111100;
 	cell.shape[6] = cell.shape[6] | 0b00011000;
 	cell.draw(screen);
-	cell.row = us2.x;
-	cell.col = us2.y;
-	cell.draw(screen);
+	if (us1.x > 0)
+	{
+		Cell cell(us1.x-1, us1.y, maze.grid[us1.x-1][us1.y]);
+		cell.draw(screen);
+	} 
+	if (us1.x < 7)
+	{
+		Cell cell(us1.x+1, us1.y, maze.grid[us1.x+1][us1.y]);
+		cell.draw(screen);
+	}
+	if (us1.y > 0)
+	{
+		Cell cell(us1.x, us1.y-1, maze.grid[us1.x][us1.y-1]);
+		cell.draw(screen);
+	} 
+	if (us1.x < 15)
+	{
+		Cell cell(us1.x, us1.y+1, maze.grid[us1.x][us1.y+1]);
+		cell.draw(screen);
+	}
+	if (abs(des.x-us1.x) + abs(des.y-us1.y) <=1)
+	{
+		Cell cell(des.x, des.y, maze.grid[des.x][des.y]);
+		cell.shape[3] = cell.shape[3] | 0b00100100;
+		cell.shape[4] = cell.shape[4] | 0b00011000;
+		cell.shape[5] = cell.shape[5] | 0b00011000;
+		cell.shape[6] = cell.shape[6] | 0b00100100;
+		cell.draw(screen);
+	}
 }
 
+void User::move(SSD1306_t *screen, Maze &maze, Node start, Node end)
+{
+	Cell cell(start.x, start.y, 3);
+	cell.draw(screen);
+	if (start.x > 0)
+	{
+		Cell cell(start.x-1, start.y,3);
+		cell.draw(screen);
+	} 
+	if (start.x < 7)
+	{
+		Cell cell(start.x+1, start.y, 3);
+		cell.draw(screen);
+	}
+	if (start.y > 0)
+	{
+		Cell cell(start.x, start.y-1, 3);
+		cell.draw(screen);
+	} 
+	if (start.x < 15)
+	{
+		Cell cell(start.x, start.y+1, 3);
+		cell.draw(screen);
+	}
+	us1 = end;
+}
 User::~User() {}
