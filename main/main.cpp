@@ -34,6 +34,8 @@ uint8_t choice = CHOICE::START;
 
 static void play()
 {
+	sync_pos_recv[0] = '0';
+	sync_pos_recv[1] = '0';
 	clearScreen(&oled, BLACK);
 	showText(&oled, " Waiting...", 4, BLACK);
 	Maze maze;
@@ -78,12 +80,13 @@ static void play()
 			user.des.y = (((int) map_maze[129]) - 48) * 10 + ((int) map_maze[130]) - 48;
 			user.us1.x = ((int) map_maze[131]) - 48; 
 			user.us1.y = (((int) map_maze[132]) - 48) * 10 + ((int) map_maze[133]) - 48;
+			user.encode(sync_pos_send);
 			break;
 		}
 	}
 	
 	clearScreen(&oled, BLACK);
-	maze.draw(&oled);
+//	maze.draw(&oled);
 	while (state == PLAY)
 	{
 		user.draw(&oled, maze);
@@ -260,7 +263,6 @@ extern "C" void app_main()
 		}
 	}
 }
-
 
 
 

@@ -9,6 +9,7 @@
 #include <string.h>
 #include <sys/socket.h>
 #include <netdb.h>
+#include "esp_task_wdt.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "esp_log.h"
@@ -88,7 +89,7 @@ void tcp_client_task(void *pvParameters) {
 
         sock = socket(AF_INET, SOCK_STREAM, IPPROTO_IP);
         if (sock < 0) {
-            ESP_LOGE(TAG, "Unable to create socket: errno %d", errno);
+//            ESP_LOGE(TAG, "Unable to create socket: errno %d", errno);
             vTaskDelete(NULL);
             return;
         }
@@ -96,30 +97,30 @@ void tcp_client_task(void *pvParameters) {
 
         int err = connect(sock, (struct sockaddr *)&dest_addr, sizeof(dest_addr));
         if (err != 0) {
-            ESP_LOGE(TAG, "Socket unable to connect: errno %d", errno);
+//            ESP_LOGE(TAG, "Socket unable to connect: errno %d", errno);
             close(sock);
             vTaskDelete(NULL);
             return;
         }
-        ESP_LOGI(TAG, "Successfully connected to server");
+//        ESP_LOGI(TAG, "Successfully connected to server");
 
         err = send(sock, message, strlen(message), 0);
         if (err < 0) {
-            ESP_LOGE(TAG, "Error occurred during sending: errno %d", errno);
+//            ESP_LOGE(TAG, "Error occurred during sending: errno %d", errno);
         } else {
-            ESP_LOGI(TAG, "message sent: %s", message);
+//            ESP_LOGI(TAG, "message sent: %s", message);
         }
 
-        len = recv(sock, map_maze, sizeof(map_maze) - 1, 0);
+        len = recv(sock, map_maze, sizeof(map_maze), 0);
         if (len < 0) {
-            ESP_LOGE(TAG, "Receive failed: errno %d", errno);
+//            ESP_LOGE(TAG, "Receive failed: errno %d", errno);
         } else {
             map_maze[len] = '\0'; // Đảm bảo chuỗi nhận được có kết thúc hợp lệ
-            ESP_LOGI(TAG, "Received from server: %s", map_maze);
+//            ESP_LOGI(TAG, "Received from server: %s", map_maze);
         }
 
         close(sock);
-        ESP_LOGI(TAG, "Socket closed");
+//        ESP_LOGI(TAG, "Socket closed");
         xSemaphoreGive(tcp_maze);
         vTaskDelete(NULL);
     }
@@ -127,82 +128,78 @@ void tcp_client_task(void *pvParameters) {
 
 static void udp_client_task(void *pvParameters)
 {
-	if (xSemaphoreTake(tcp_maze, portMAX_DELAY) == pdTRUE) {
-    char addr_str[128];
-    int addr_family;
-    int ip_protocol;
+    if (xSemaphoreTake(tcp_maze, portMAX_DELAY) == pdTRUE) {
+        char addr_str[128];
+        int addr_family = AF_INET;
+        int ip_protocol = IPPROTO_IP;
 
-    while (1) 
-    {
+        // Thiết lập địa chỉ điểm đến (UDP Server)
         struct sockaddr_in dest_addr;
         dest_addr.sin_addr.s_addr = inet_addr(SERVER_IP);
-        dest_addr.sin_family = AF_INET;
+        dest_addr.sin_family = addr_family;
         dest_addr.sin_port = htons(SERVER_UDP_PORT);
-        addr_family = AF_INET;
-        ip_protocol = IPPROTO_IP;
-        inet_ntoa_r(dest_addr.sin_addr, addr_str, sizeof(addr_str) - 1);
 
+        // Tạo socket UDP
         int sock = socket(addr_family, SOCK_DGRAM, ip_protocol);
-        if (sock < 0) 
-        {
-            ESP_LOGE(TAG, "Unable to create socket: errno %d", errno);
-            break;
+        if (sock < 0) {
+//            ESP_LOGE(TAG, "Unable to create socket: errno %d", errno);
+            vTaskDelete(NULL);  // Đảm bảo task được xóa khi có lỗi
+            return;
         }
-        ESP_LOGI(TAG, "Socket created, sending to %s:%d", SERVER_IP, SERVER_UDP_PORT);
+//        ESP_LOGI(TAG, "Socket created, sending to %s:%d", SERVER_IP, SERVER_UDP_PORT);
 
+        // Thiết lập timeout cho việc nhận dữ liệu
         struct timeval timeout;
         timeout.tv_sec = 0;  
-        timeout.tv_usec = 200000;
+        timeout.tv_usec = 200000;  // 200ms timeout
         setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout));
 
-        while (1) 
-        {
-            int err = sendto(sock, sync_pos_send, strlen(sync_pos_send), 0, (struct sockaddr *)&dest_addr, sizeof(dest_addr));
-            if (err < 0) 
-            {
-                ESP_LOGE(TAG, "Error occurred during sending: errno %d", errno);
+        while (1) {
+            // Gửi dữ liệu
+            int err = sendto(sock, sync_pos_send, 4, 0, (struct sockaddr *)&dest_addr, sizeof(dest_addr));
+            if (err < 0) {
+//                ESP_LOGE(TAG, "Error occurred during sending: errno %d", errno);
                 break;
             }
-            ESP_LOGI(TAG, "Message sent");
+//            ESP_LOGI(TAG, "Message sent");
 
+            // Nhận dữ liệu
             struct sockaddr_in source_addr;
             socklen_t socklen = sizeof(source_addr);
-            int len = recvfrom(sock, sync_pos_recv, sizeof(sync_pos_recv), 0, (struct sockaddr *)&source_addr, &socklen);
+            int len = recvfrom(sock, sync_pos_recv, 2, 0, (struct sockaddr *)&source_addr, &socklen);
 
-            if (len < 0) 
-            {
-                if (errno == EWOULDBLOCK) 
-                {
-                    ESP_LOGW(TAG, "Receive timeout");
-                } 
-                else 
-                {
-                    ESP_LOGE(TAG, "Error occurred during receiving: errno %d", errno);
+            if (len < 0) {
+                if (errno == EWOULDBLOCK) {
+//                    ESP_LOGW(TAG, "Receive timeout");
+                } else {
+//                    ESP_LOGE(TAG, "Error occurred during receiving: errno %d", errno);
                     break;
                 }
-            } 
-            else 
-            {
-                sync_pos_recv[len] = 0;  // 
-                ESP_LOGI(TAG, "Received %d bytes from %s:", len, addr_str);
-                ESP_LOGI(TAG, "%s", sync_pos_recv);
+            } else {
+                sync_pos_recv[len] = 0;  // Null-terminate the received string
+//                ESP_LOGI(TAG, "Received %d bytes from %s:", len, addr_str);
+//                ESP_LOGI(TAG, "%s", sync_pos_recv);
             }
 
-            vTaskDelay(100 / portTICK_PERIOD_MS);
+            // Đảm bảo không bị tràn bộ nhớ hoặc quá tải CPU
+            vTaskDelay(100 / portTICK_PERIOD_MS);  // Delay 100ms
 
-            if (sock != -1) 
-            {
-                ESP_LOGE(TAG, "Shutting down socket and restarting...");
-                shutdown(sock, 0);
-                close(sock);
+            // Reset watchdog timer (nếu đang sử dụng)
+            if (xTaskGetTickCount() % 500 == 0) {
+//                ESP_LOGI(TAG, "Resetting watchdog timer");
+                esp_task_wdt_reset();  // Reset Task Watchdog Timer
             }
-            
-            vTaskDelay(100 / portTICK_PERIOD_MS);
-    	}
+        }
+
+        // Đóng socket khi vòng lặp kết thúc
+        shutdown(sock, 0);
+        close(sock);
     }
+
+    // Xóa task sau khi hoàn thành
     vTaskDelete(NULL);
-    }
 }
+
 
 void sync()
 {
