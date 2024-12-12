@@ -13,7 +13,9 @@
 #include <string.h>
 #include "Cell.h"
 
-User::User(Maze &maze) 
+User::User() {}
+
+void User::gen(Maze &maze)
 {
 	for (uint8_t x = 0; x<8; x++)
 	{
@@ -24,6 +26,19 @@ User::User(Maze &maze)
 	}
 	getDes(maze, us1, us2);
 }
+
+
+void User::encode(char *loc)
+{
+	loc[0] = (char) (us1.x+48); loc[1] = (char) (us1.y / 10 + 48); loc[2] = (char) (us1.y % 10 + 48);
+	if (fair) loc[3] = '1'; else loc[3] = '0';
+}
+
+void User::decode(char *loc)
+{
+	
+}
+
 
 void User::getDes(Maze &maze, Node start, Node end)
 {
@@ -155,6 +170,7 @@ void User::getLoc(uint8_t dis, Node start, Node end)
 
 bool User::checkMap(Maze &maze, Node start, Node end)
 {
+	if (end.x < 0 || end.x > 7 || end.y < 0 || end.y > 15) return 0;
 	if (start.x == end.x && start.y == end.y) return 0;
 	if (start.x == end.x)
 	{
@@ -220,30 +236,42 @@ void User::draw(SSD1306_t *screen, Maze &maze)
 	}
 }
 
-void User::move(SSD1306_t *screen, Maze &maze, Node start, Node end)
+void User::move(SSD1306_t *screen)
 {
-	Cell cell(start.x, start.y, 3);
+	Cell cell(us1.x, us1.y, 3);
 	cell.draw(screen);
-	if (start.x > 0)
+	if (us1.x > 0)
 	{
-		Cell cell(start.x-1, start.y,3);
+		Cell cell(us1.x-1, us1.y,3);
 		cell.draw(screen);
 	} 
-	if (start.x < 7)
+	if (us1.x < 7)
 	{
-		Cell cell(start.x+1, start.y, 3);
+		Cell cell(us1.x+1, us1.y, 3);
 		cell.draw(screen);
 	}
-	if (start.y > 0)
+	if (us1.y > 0)
 	{
-		Cell cell(start.x, start.y-1, 3);
+		Cell cell(us1.x, us1.y-1, 3);
 		cell.draw(screen);
 	} 
-	if (start.x < 15)
+	if (us1.x < 15)
 	{
-		Cell cell(start.x, start.y+1, 3);
+		Cell cell(us1.x, us1.y+1, 3);
 		cell.draw(screen);
 	}
-	us1 = end;
 }
+
+bool User::win()
+{
+	if (us1.x != des.x || us1.y != des.y) return 0;
+	return 1;
+}
+
+bool User::lose()
+{
+	if (us2.x != des.x || us2.x != des.y) return 0;
+	return 1;
+}
+
 User::~User() {}

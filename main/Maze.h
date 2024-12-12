@@ -13,6 +13,9 @@
 class Maze {
 public:
 	Maze();
+	void gen();
+	void encode(char *map);
+	void decode(char *map);
 	uint8_t grid[8][16];
 	void draw(SSD1306_t *screen);
 	virtual ~Maze();

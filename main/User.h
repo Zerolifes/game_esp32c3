@@ -30,13 +30,19 @@ public:
 	Node us2;
 	Node des;
 	uint8_t far = 0;
-	User(Maze &maze);
+	bool fair = 0;
+	User();
+	void gen(Maze &maze);
+	void encode(char *loc);
+	void decode(char *loc);
 	void bfs(Maze &maze, Node start);
 	void getLoc(uint8_t dis, Node start, Node end);
 	bool checkMap(Maze &maze, Node start, Node end);
 	void draw(SSD1306_t *screen, Maze &maze);
-	void move(SSD1306_t *screen, Maze &maze, Node start, Node end);
+	void move(SSD1306_t *screen);
 	void getDes(Maze &maze, Node start, Node end);
+	bool win();
+	bool lose();
 	virtual ~User();
 };
 

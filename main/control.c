@@ -22,12 +22,13 @@
 #define BUTTON_RIGHT GPIO_NUM_4
 #define BUTTON_DOWN GPIO_NUM_5
 #define BUTTON_LEFT GPIO_NUM_7
+#define BUTTON_SETTING GPIO_NUM_8
 
-#define DEBOUNCE_DELAY_MS 250 
+#define DEBOUNCE_DELAY_MS 200 
 
-static uint8_t usx;
-static uint8_t usy;
-static bool gameLoop = 1;
+enum KEY {UP, DOWN, LEFT, RIGHT, SETTING, FREE};
+
+static enum KEY key_press = FREE;
 
 static QueueHandle_t gpio_evt_queue = NULL;
 
@@ -52,26 +53,32 @@ static void gpio_task_example(void* arg)
            	{
 				case (BUTTON_UP):
 				{
-					if (usx>0) usx = usx - 1;
+					key_press = UP;
 					break;
 				}
 				case (BUTTON_RIGHT):
 				{
-					if (usy<15) usy = usy + 1;
+					key_press = RIGHT;
 					break;
 				}	
 				case (BUTTON_DOWN):
 				{
-					if (usx<7) usx = usx + 1;
+					key_press = DOWN;
 					break;
 				}
 				case (BUTTON_LEFT):
 				{
-					if(usy>0) usy = usy - 1;
+					key_press = LEFT;
+					break;
+				}
+				case (BUTTON_SETTING):
+				{
+					key_press = SETTING;
 					break;
 				}   
 				default:
 				{
+					key_press = FREE;
 					break;
 				}
 			}
@@ -86,7 +93,7 @@ static void remoteConfig()
 	button.mode = GPIO_MODE_INPUT;
 	button.pull_up_en = GPIO_PULLUP_ENABLE;
 	button.pull_down_en = GPIO_PULLDOWN_DISABLE;
-	button.pin_bit_mask = ((1ULL << BUTTON_UP) | (1 << BUTTON_DOWN) | (1ULL << BUTTON_LEFT) | (1ULL << BUTTON_RIGHT));
+	button.pin_bit_mask = ((1ULL << BUTTON_UP) | (1 << BUTTON_DOWN) | (1ULL << BUTTON_LEFT) | (1ULL << BUTTON_RIGHT) | (1ULL << BUTTON_SETTING));
 	
 	gpio_config(&button);
 	
@@ -97,6 +104,7 @@ static void remoteConfig()
 	gpio_isr_handler_add(BUTTON_DOWN, gpio_isr_handler , (void*) BUTTON_DOWN);
 	gpio_isr_handler_add(BUTTON_LEFT, gpio_isr_handler , (void*) BUTTON_LEFT);
 	gpio_isr_handler_add(BUTTON_RIGHT, gpio_isr_handler , (void*) BUTTON_RIGHT);
+	gpio_isr_handler_add(BUTTON_SETTING, gpio_isr_handler, (void*) BUTTON_SETTING);
 }
 
 
