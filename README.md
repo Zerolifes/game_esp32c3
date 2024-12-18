@@ -1,11 +1,52 @@
-ESP-IDF template app
-====================
+# Handheld game console project with ESP32C3
+1. Introduction
+    
+    handheld game console with 2 single player and duo modes.
+    
+    gameplay: the player moves to find his way in a dark maze to find treasure
 
-This is a template application to be used with [Espressif IoT Development Framework](https://github.com/espressif/esp-idf).
+    ![handheld game console](./image/product.png)
 
-Please check [ESP-IDF docs](https://docs.espressif.com/projects/esp-idf/en/latest/get-started/index.html) for getting started instructions.
+2. Platform is ESP-IDF v5.3.1-dirty
+3. Deployment
++ clone repo
 
-*Code in this repository is in the Public Domain (or CC0 licensed, at your option.)
-Unless required by applicable law or agreed to in writing, this
-software is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
-CONDITIONS OF ANY KIND, either express or implied.*
+    ```
+    git clone https://github.com/Zerolifes/game_esp32c3.git
+    cd game_esp32c3
+    ```
++ build: use **ESP-IDF CMD**
+
+    ```
+    idf.py set-targer esp32c3
+    idf.py build
+    ```
++ hardware connection
+
+    + use **SSD1306 128 x 64**
+    + use **ESP32 - C3 - MINI - 1**
+
+
+    ![Circuit diagram](./image/Circuit_diagram.png)
+
++ flash
+
+    + connect esp32c3 with your LAPTOP or PC
+
+    ```
+    idf.py flash
+    ```
+
++ server and stream
+
+    ```
+    python stream.py
+    ```
+
++ interface of game
+
+    + Start - to start single player
+    + Pair-gen - to start duos with your device being the maze generator
+    + Pair-find - to start duos with your device being the matchmaker
+
++ let's play!
