@@ -17,6 +17,8 @@
     ```
 + build: use **ESP-IDF CMD**
 
+    + Before building you may have to change the information in main/pairing.c file from line 21 to line 27 and change the information in stream.py file to match your network configuration
+
     ```
     idf.py set-targer esp32c3
     idf.py build
